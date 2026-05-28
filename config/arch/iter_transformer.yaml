@@ -1,0 +1,59 @@
+name: recursive_reasoning.iterative@IterativeReasoningModel_ACTV1
+loss:
+  name: losses@IterativeReasoningLossHead
+  loss_type: stablemax_cross_entropy
+
+# --- architecture ---
+cell_type: transformer
+# Sized to match HRM defaults (H_layers=4 + L_layers=4, hidden_size=512) so the
+# parameter count is on the order of HRM's ~25M (~27.3M for the transformer
+# cell, ~23.6M for the MLP cell). Adjust via the runner's size presets or
+# override directly (e.g. arch.cell_layers=2 arch.encoder_layers=2).
+encoder_layers: 4
+cell_layers: 4
+hidden_size: 512
+num_heads: 8
+expansion: 4
+
+# Encoder positional encoding (always on by default).
+pos_encodings: rope
+# Cell positional encoding, independent of the encoder's. Supported: 'rope' or 'none'.
+cell_pos_encodings: rope
+puzzle_emb_ndim: ${.hidden_size}
+puzzle_emb_len: 16
+forward_dtype: bfloat16
+
+# --- iterative reasoning (forwarded to IterativeReasoningConfig) ---
+halt_max_steps: 16
+halt_eps: 1e-6
+halt_bias_init: -5.0
+force_final_halt: True
+stochastic_halting: True
+halting_kl_coef: 1.0
+kl_z_all_steps: False
+kl_mode: exact
+
+# Latent connection. 'none' uses the cell output as-is; 'skip' adds the
+# encoding (z_t = x + f); 'residual' adds the previous latent
+# (z_t = z_{t-1} + f). 'skip' and 'residual' are mutually exclusive options
+# of this single knob.
+connection_type: none
+
+# Apply loss to every latent across the full trajectory and let the latent
+# keep evolving past the sampled halt step. True = no BPTT through the
+# trajectory; each latent in the rollout is supervised independently.
+loss_on_all_latents: True
+
+# Differentiable halt sampling (straight-through Gumbel-Sigmoid).
+gumbel_sigmoid_halting: False
+gumbel_sigmoid_temperature: 1.0
+
+# --- alternative (SAC-style reparameterized-KL) training ---
+alternative_training: False
+alternative_entropy_coef: 0.0  # positive = soft updates
+stochastic_latents: False
+latent_log_std_source: output  # 'output' (Linear head) or 'parameter' (scalar)
+latent_log_std_init: 0.0
+
+# Transformer cell default: no BPTT.
+detach_latent_between_steps: True

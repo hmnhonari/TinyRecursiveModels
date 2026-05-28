@@ -1,0 +1,70 @@
+name: recursive_reasoning.iterative@IterativeReasoningModel_ACTV1
+loss:
+  name: losses@IterativeReasoningLossHead
+  loss_type: stablemax_cross_entropy
+
+# --- architecture ---
+cell_type: mlp
+# Sized to match HRM defaults (H_layers=4 + L_layers=4, hidden_size=512) so the
+# parameter count is on the order of HRM's ~25M (~23.6M for the MLP cell,
+# ~27.3M for the transformer cell). Adjust via the runner's size presets or
+# override directly (e.g. arch.cell_layers=2 arch.encoder_layers=2).
+encoder_layers: 4
+cell_layers: 4
+hidden_size: 512
+num_heads: 8
+expansion: 4
+
+# Encoder positional encoding stays on for both cell types.
+pos_encodings: rope
+# Unused by the MLP cell, kept here so Hydra can sweep over it uniformly.
+cell_pos_encodings: rope
+puzzle_emb_ndim: ${.hidden_size}
+puzzle_emb_len: 16
+forward_dtype: bfloat16
+
+# --- iterative reasoning (forwarded to IterativeReasoningConfig) ---
+halt_max_steps: 16
+halt_eps: 1e-6
+halt_bias_init: -5.0
+force_final_halt: True
+stochastic_halting: True
+halting_kl_coef: 1.0
+kl_z_all_steps: False
+kl_mode: exact
+
+# Latent connection. 'none' uses the cell output as-is; 'skip' adds the
+# encoding (z_t = x + f); 'residual' adds the previous latent
+# (z_t = z_{t-1} + f). 'skip' and 'residual' are mutually exclusive options
+# of this single knob.
+connection_type: none
+
+# Apply loss to every latent across the full trajectory and let the latent
+# keep evolving past the sampled halt step. False = standard BPTT (loss on
+# the selected halt latent only).
+loss_on_all_latents: False
+
+# Differentiable halt sampling (straight-through Gumbel-Sigmoid).
+gumbel_sigmoid_halting: False
+gumbel_sigmoid_temperature: 1.0
+
+# --- alternative (SAC-style reparameterized-KL) training ---
+# Off by default. When True, total_loss = task_loss(z_halt) + log_pi
+# - alpha * entropy (no Z calculation). Requires gumbel_sigmoid_halting=True
+# when stochastic_latents=True; otherwise emits a warning that the latents
+# and halt decisions are decoupled.
+alternative_training: False
+# Positive alpha encourages entropy (SAC convention). Default 0.0 = no
+# entropy regularization on top of the base SAC loss.
+alternative_entropy_coef: 0.0
+# Stochastic latents (rsample from Normal). Requires gumbel_sigmoid_halting
+# AND alternative_training. Off by default.
+stochastic_latents: False
+# Source of the latent Gaussian log std:
+#   'output'    - learnable Linear head over the mean (SAC-style)
+#   'parameter' - single learnable scalar broadcast across all dims
+latent_log_std_source: output
+latent_log_std_init: 0.0
+
+# MLP cell default: BPTT (no detach across steps).
+detach_latent_between_steps: False
