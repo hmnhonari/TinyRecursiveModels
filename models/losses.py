@@ -1,16 +1,9 @@
-import os
-import sys
 from typing import Any, Tuple, Dict, Sequence, Optional
 
 import torch
 import torch.nn.functional as F
 from torch import nn
 import math
-
-# Sibling package shim: iterative_reasoning lives next to recursive_reasoning on disk.
-_REPO_ROOT = os.path.abspath(os.path.join(os.path.dirname(__file__), "..", ".."))
-if _REPO_ROOT not in sys.path:
-    sys.path.insert(0, _REPO_ROOT)
 
 IGNORE_LABEL_ID = -100
 
@@ -290,4 +283,3 @@ class IterativeReasoningLossHead(nn.Module):
         detached_outputs = {k: outputs[k].detach() for k in return_keys if k in outputs and torch.is_tensor(outputs[k])}
 
         return new_carry, total_loss, metrics, detached_outputs, new_carry.halted.all()
-

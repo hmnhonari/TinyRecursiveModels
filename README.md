@@ -36,6 +36,11 @@ pip install --no-cache-dir --no-build-isolation adam-atan2
 wandb login YOUR-LOGIN # login if you want the logger to sync results to your Weights & Biases (https://wandb.ai/)
 ```
 
+This fork's iterative-reasoning TRM variants install
+`iterative-reasoning` directly from
+`git@github.com:hmnhonari/iterative_reasoning.git` through
+`requirements.txt`.
+
 ### Dataset Preparation
 
 ```bash

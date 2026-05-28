@@ -22,8 +22,6 @@ from __future__ import annotations
 
 import dataclasses
 import math
-import os
-import sys
 from dataclasses import dataclass
 from typing import Any, Dict, List, Optional, Tuple
 
@@ -32,12 +30,7 @@ import torch.nn.functional as F
 from pydantic import BaseModel, ConfigDict
 from torch import nn
 
-# Sibling package shim: iterative_reasoning lives next to recursive_reasoning on disk.
-_REPO_ROOT = os.path.abspath(os.path.join(os.path.dirname(__file__), "..", "..", ".."))
-if _REPO_ROOT not in sys.path:
-    sys.path.insert(0, _REPO_ROOT)
-
-from iterative_reasoning import (  # noqa: E402
+from iterative_reasoning import (
     IterativeReasoningConfig,
     IterativeReasoningModel,
     IterativeReasoningOutput,

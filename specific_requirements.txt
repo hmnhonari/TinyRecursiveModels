@@ -1,4 +1,5 @@
 torch==2.7.0+cu126
+iterative-reasoning @ git+ssh://git@github.com/hmnhonari/iterative_reasoning.git@9f50a7afccbb4248d55506e77560ca5efb1455b6
 adam-atan2==0.0.3
 einops==0.8.1
 tqdm==4.67.1
